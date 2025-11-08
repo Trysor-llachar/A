@@ -1,0 +1,19 @@
+{
+    "COSCO_CY_Rules": {
+        "name": "COSCO_CY_Rules",
+        "columns": [
+            "Service",
+            "CY Time"
+        ],
+        "data": [
+            [
+                "I16",
+                "Friday 06:00 AM"
+            ],
+            [
+                "SV1",
+                "Sunday 08:00 AM"
+            ]
+        ]
+    }
+}
