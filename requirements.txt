@@ -1,0 +1,8 @@
+PyQt6
+pytesseract
+pandas
+pyautogui
+mss
+opencv-python-headless
+pygetwindow
+python-dateutil
