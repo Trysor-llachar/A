@@ -14,6 +14,8 @@ from PyQt6.QtCore import QThread, pyqtSignal, QRect, QEventLoop, QPoint
 from dateutil.parser import parse
 from datetime import timedelta
 
+from src.utils import find_text_on_screen
+
 
 class AutomationEngine(QThread):
     scan_complete = pyqtSignal(object, str)
@@ -114,31 +116,8 @@ class PathRunner(QThread):
         self.log_message.emit("Thực thi Lộ trình hoàn tất.")
         self.path_complete.emit()
 
-    def find_text_location(self, text_to_find):
-        # This requires a full screen scan, similar to AutomationEngine
-        # For simplicity, we'll re-scan here. In a future refactor, this could be shared.
-        with mss() as sct:
-            sct_img = sct.grab(sct.monitors[1])
-            img = np.array(sct_img)
-            ocr_df = pd.read_csv(StringIO(pytesseract.image_to_data(img)), sep='\t')
-
-        words = text_to_find.split()
-        if not words: return None
-
-        ocr_df['text_str'] = ocr_df['text'].astype(str)
-        for i in range(len(ocr_df) - len(words) + 1):
-            chunk = ocr_df.iloc[i:i + len(words)]
-            sequence = " ".join(chunk['text_str'])
-            if sequence == text_to_find:
-                x_min = chunk['left'].min()
-                y_min = chunk['top'].min()
-                x_max = (chunk['left'] + chunk['width']).max()
-                y_max = (chunk['top'] + chunk['height']).max()
-                return QRect(int(x_min), int(y_min), int(x_max - x_min), int(y_max - y_min))
-        return None
-
     def click_text(self, text_to_find):
-        rect = self.find_text_location(text_to_find)
+        rect = find_text_on_screen(text_to_find)
         if rect:
             self.log_message.emit(f"Đã tìm thấy văn bản '{text_to_find}' tại {rect}. Đang nhấp...")
             pyautogui.click(rect.center().x(), rect.center().y())

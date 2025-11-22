@@ -14,13 +14,15 @@ import numpy as np
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QHBoxLayout, QWidget, QMessageBox
 from PyQt6.QtCore import Qt, QRect
 
-from src.ui_components import (NoteWindow, ScreenSelector, ProcessManagerWindow,
-                               RuleManagerWindow, KnowledgeBaseManager, StatusOverlay,
-                               SuggestionDialog, HighlightWindow, LineManagerWindow,
-                               NavigationPathManagerWindow, PathSelectionDialog)
+from src.ui.note_window import NoteWindow
+from src.ui.dialogs import (ScreenSelector, StatusOverlay, SuggestionDialog, HighlightWindow)
+from src.ui.managers import (ProcessManagerWindow, RuleManagerWindow, KnowledgeBaseManager,
+                             LineManagerWindow, NavigationPathManagerWindow, PathSelectionDialog,
+                             ComparisonDialog)
 from src.automation import AutomationEngine, ProcessRunner, ComprehensiveScanner, PathRunner
 from src.data_management import StateManager, LineManager, DatabaseManager
 from src.config import NOTES_FILE, BACKUP_FILE
+from src.utils import find_text_location_in_df
 
 class FloatingMenu(QMainWindow):
     def __init__(self):
@@ -155,21 +157,6 @@ class FloatingMenu(QMainWindow):
                 self.process_manager.exec()
         self.show()
 
-    def find_text_location(self, df, text_to_find):
-        words = text_to_find.split()
-        if not words: return None
-        df['text_str'] = df['text'].astype(str)
-        for i in range(len(df) - len(words) + 1):
-            chunk = df.iloc[i:i + len(words)]
-            sequence = " ".join(chunk['text_str'])
-            if sequence == text_to_find:
-                x_min = chunk['left'].min()
-                y_min = chunk['top'].min()
-                x_max = (chunk['left'] + chunk['width']).max()
-                y_max = (chunk['top'] + chunk['height']).max()
-                return QRect(int(x_min), int(y_min), int(x_max - x_min), int(y_max - y_min))
-        return None
-
     def process_screen_data(self, ocr_df, window_title):
         if self.process_runner and self.process_runner.isRunning():
             return
@@ -209,7 +196,7 @@ class FloatingMenu(QMainWindow):
                 pyautogui.click(x=pos[0], y=pos[1])
                 pyautogui.write(text_to_type, interval=0.05)
         elif action_type == "Làm nổi bật":
-            rect = self.find_text_location(ocr_df, rule['condition'])
+            rect = find_text_location_in_df(ocr_df, rule['condition'])
             if rect:
                 self.show_highlight(rect)
 
